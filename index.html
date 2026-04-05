@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alignment Heatmap - Live</title>
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Babel para JSX no navegador -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Efeito de brilho para os pontos */
+        .point-glow {
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-slate-950">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo } = React;
+
+        // Voto partilhado por Phineas e Radinho (já corrigido conforme conversas)
+        const votoDuplo = [
+            { name: 'Shaq', x: 2, y: 1 }, { name: 'Phineas', x: 3, y: 1 }, { name: 'Selico', x: 5, y: 1 },  
+            { name: 'Liminha', x: 1, y: 2 }, { name: 'Helice', x: 3, y: 2 }, { name: 'Oscar', x: 4, y: 2 },   
+            { name: 'Radinho', x: 5, y: 2 }, { name: 'Hec', x: 1, y: 4 }, { name: 'Tigrão', x: 2, y: 4 },  
+            { name: 'Leo', x: 5, y: 3 }, { name: 'Bixobre', x: 5, y: 4 }, { name: 'Jow', x: 2, y: 5 },     
+            { name: 'Herbs', x: 3, y: 5 }, { name: 'RG', x: 4, y: 4 }       
+        ];
+
+        // Base de dados completa com todos os votos enviados
+        const votesData = {
+            Jow: [
+                { name: 'Shaq', x: 3, y: 1 }, { name: 'Oscar', x: 4, y: 1 }, { name: 'Leo', x: 5, y: 1 },
+                { name: 'Helice', x: 1, y: 1 }, { name: 'Liminha', x: 3, y: 1 }, { name: 'Tigrão', x: 1, y: 3 },
+                { name: 'Phineas', x: 3, y: 3 }, { name: 'Selico', x: 4, y: 3 }, { name: 'Bixobre', x: 5, y: 3 },
+                { name: 'Radinho', x: 1, y: 3 }, { name: 'Herbs', x: 3, y: 3 }, { name: 'Hec', x: 1, y: 5 },
+                { name: 'Jow', x: 3, y: 5 }, { name: 'RG', x: 5, y: 5 }
+            ],
+            RG: [
+                { name: 'Liminha', x: 3, y: 1 }, { name: 'RG', x: 3, y: 1 }, { name: 'Shaq', x: 2, y: 2 },
+                { name: 'Selico', x: 5, y: 1 }, { name: 'Hec', x: 1, y: 3 }, { name: 'Tigrão', x: 1, y: 3 },
+                { name: 'Radinho', x: 4, y: 3 }, { name: 'Leo', x: 5, y: 3 }, { name: 'Oscar', x: 5, y: 3 },
+                { name: 'Phineas', x: 3, y: 3 }, { name: 'Herbs', x: 2, y: 4 }, { name: 'Bixobre', x: 5, y: 4 },
+                { name: 'Helice', x: 1, y: 5 }, { name: 'Jow', x: 5, y: 5 }
+            ],
+            Oscar: [
+                { name: 'Liminha', x: 2, y: 1 }, { name: 'Helice', x: 2, y: 1 }, { name: 'Phineas', x: 1, y: 2 },
+                { name: 'Shaq', x: 2, y: 2 }, { name: 'Oscar', x: 4, y: 1 }, { name: 'Leo', x: 5, y: 1 },
+                { name: 'Selico', x: 5, y: 2 }, { name: 'Hec', x: 3, y: 3 }, { name: 'Radinho', x: 2, y: 3 },
+                { name: 'Bixobre', x: 5, y: 4 }, { name: 'Tigrão', x: 1, y: 4 }, { name: 'Jow', x: 3, y: 4 },
+                { name: 'Herbs', x: 2, y: 5 }, { name: 'RG', x: 4, y: 5 }
+            ],
+            Phineas: [...votoDuplo],
+            Radinho: [...votoDuplo],
+            Tigrão: [
+                { name: 'Shaq', x: 1, y: 1 }, { name: 'Helice', x: 1, y: 1 }, { name: 'Selico', x: 5, y: 1 },
+                { name: 'Radinho', x: 4, y: 1 }, { name: 'Jow', x: 1, y: 2 }, { name: 'Phineas', x: 3, y: 2 },
+                { name: 'Hec', x: 3, y: 3 }, { name: 'Leo', x: 4, y: 3 }, { name: 'Tigrão', x: 1, y: 4 },
+                { name: 'Liminha', x: 3, y: 4 }, { name: 'Bixobre', x: 5, y: 4 }, { name: 'Oscar', x: 3, y: 5 },
+                { name: 'Herbs', x: 3, y: 5 }, { name: 'RG', x: 4, y: 5 }
+            ],
+            Leo: [
+                { name: 'Helice', x: 1, y: 1 }, { name: 'Shaq', x: 1, y: 1 }, { name: 'Liminha', x: 1, y: 2 },
+                { name: 'Phineas', x: 3, y: 1 }, { name: 'Selico', x: 5, y: 1 }, { name: 'Jow', x: 2, y: 2 },
+                { name: 'Oscar', x: 4, y: 2 }, { name: 'Tigrão', x: 2, y: 3 }, { name: 'Hec', x: 3, y: 3 },
+                { name: 'Leo', x: 5, y: 3 }, { name: 'Radinho', x: 1, y: 5 }, { name: 'Herbs', x: 3, y: 5 },
+                { name: 'RG', x: 5, y: 5 }, { name: 'Bixobre', x: 6, y: 3 }
+            ],
+            Liminha: [
+                { name: 'Shaq', x: 1, y: 1 }, { name: 'Helice', x: 2, y: 1 }, { name: 'Liminha', x: 3, y: 1 },
+                { name: 'Leo', x: 5, y: 1 }, { name: 'Oscar', x: 4, y: 2 }, { name: 'Phineas', x: 3, y: 2 },
+                { name: 'Radinho', x: 4, y: 3 }, { name: 'Tigrão', x: 1, y: 3 }, { name: 'Hec', x: 3, y: 4 },
+                { name: 'Jow', x: 2, y: 4 }, { name: 'Herbs', x: 3, y: 5 }, { name: 'Selico', x: 5, y: 3 },
+                { name: 'RG', x: 5, y: 5 }, { name: 'Bixobre', x: 6, y: 3 }
+            ],
+            Shaq: [
+                { name: 'Phineas', x: 1, y: 1 }, { name: 'Helice', x: 1, y: 1 }, { name: 'Shaq', x: 2, y: 2 },
+                { name: 'Liminha', x: 3, y: 1 }, { name: 'Selico', x: 5, y: 1 }, { name: 'Radinho', x: 5, y: 1 },
+                { name: 'Leo', x: 5, y: 2 }, { name: 'Hec', x: 3, y: 3 }, { name: 'Oscar', x: 4, y: 3 },
+                { name: 'Bixobre', x: 5, y: 3 }, { name: 'Jow', x: 2, y: 4 }, { name: 'Tigrão', x: 1, y: 5 },
+                { name: 'Herbs', x: 2, y: 5 }, { name: 'RG', x: 5, y: 5 }
+            ]
+        };
+
+        const allPeople = ["Bixobre", "Hec", "Helice", "Herbs", "Jow", "Leo", "Liminha", "Oscar", "Phineas", "Radinho", "RG", "Selico", "Shaq", "Tigrão"];
+
+        function App() {
+            const [viewMode, setViewMode] = useState('voter');
+            const [selection, setSelection] = useState('Consolidado');
+
+            const currentPoints = useMemo(() => {
+                const allVotes = Object.entries(votesData).flatMap(([voter, votes]) => votes.map(v => ({ ...v, voter })));
+                
+                if (viewMode === 'voter') {
+                    if (selection === 'Consolidado') {
+                        // Lógica de Consenso: mantém apenas onde a pessoa foi mais votada
+                        const voteStats = {};
+                        allVotes.forEach(v => {
+                            if (!voteStats[v.name]) voteStats[v.name] = {};
+                            const key = `${v.x}-${v.y}`;
+                            voteStats[v.name][key] = (voteStats[v.name][key] || 0) + 1;
+                        });
+
+                        const consensusPoints = [];
+                        Object.entries(voteStats).forEach(([name, coords]) => {
+                            const max = Math.max(...Object.values(coords));
+                            Object.entries(coords).forEach(([coord, count]) => {
+                                if (count === max) {
+                                    const [x, y] = coord.split('-').map(Number);
+                                    consensusPoints.push({ name, x, y, count });
+                                }
+                            });
+                        });
+                        return consensusPoints;
+                    }
+                    return votesData[selection] || [];
+                }
+                // Modo Personalidade: filtra todos os votos sobre aquela pessoa
+                return allVotes.filter(v => v.name === selection);
+            }, [viewMode, selection]);
+
+            const densityMap = useMemo(() => {
+                const map = Array.from({ length: 6 }, () => Array(6).fill(0));
+                currentPoints.forEach(p => {
+                    for (let i = p.x - 1; i <= p.x; i++) {
+                        for (let j = p.y - 1; j <= p.y; j++) {
+                            if (i >= 0 && i < 6 && j >= 0 && j < 6) map[j][i]++;
+                        }
+                    }
+                });
+                let max = 0;
+                map.forEach(r => r.forEach(v => { if (v > max) max = v; }));
+                return { map, max };
+            }, [currentPoints]);
+
+            // Escala Viridis
+            const getViridisColor = (val, max) => {
+                const t = max === 0 ? 0 : val / max;
+                let r, g, b;
+                if (t < 0.25) { const f = t / 0.25; r = 68 + f * (59 - 68); g = 1 + f * (82 - 1); b = 84 + f * (139 - 84); }
+                else if (t < 0.5) { const f = (t - 0.25) / 0.25; r = 59 + f * (33 - 59); g = 82 + f * (145 - 82); b = 139 + f * (140 - 139); }
+                else if (t < 0.75) { const f = (t - 0.5) / 0.25; r = 33 + f * (94 - 33); g = 145 + f * (201 - 145); b = 140 + f * (140 - 140); }
+                else { const f = (t - 0.75) / 0.25; r = 94 + f * (253 - 94); g = 201 + f * (231 - 201); b = 98 + f * (37 - 98); }
+                
+                const opacity = val === 0 ? 0.2 : 0.4 + t * 0.5;
+                return `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${opacity})`;
+            };
+
+            const getPosition = (val) => `${(val / 6) * 100}%`;
+
+            const alignments = [
+                { label: "Lawful Good", x: 1, y: 1 }, { label: "Neutral Good", x: 3, y: 1 }, { label: "Chaotic Good", x: 5, y: 1 },
+                { label: "Lawful Neutral", x: 1, y: 3 }, { label: "True Neutral", x: 3, y: 3 }, { label: "Chaotic Neutral", x: 5, y: 3 },
+                { label: "Lawful Evil", x: 1, y: 5 }, { label: "Neutral Evil", x: 3, y: 5 }, { label: "Chaotic Evil", x: 5, y: 5 },
+            ];
+
+            const groupedPoints = currentPoints.reduce((acc, point) => {
+                const key = `${point.x}-${point.y}`;
+                if (!acc[key]) acc[key] = [];
+                acc[key].push(viewMode === 'voter' ? { name: point.name, count: point.count } : { name: point.voter });
+                return acc;
+            }, {});
+
+            return (
+                <div className="min-h-screen text-slate-200 flex flex-col items-center p-4 sm:p-8">
+                    <div className="max-w-3xl w-full text-center mb-6">
+                        <h1 className="text-4xl font-black mb-4 text-white tracking-tighter uppercase italic drop-shadow-lg">
+                            Alignment <span className="text-red-500 underline decoration-wavy">Heatmap</span>
+                        </h1>
+                        
+                        <div className="flex bg-slate-900 p-1 rounded-2xl border border-slate-800 mb-6 w-fit mx-auto shadow-2xl">
+                            <button 
+                                onClick={() => { setViewMode('voter'); setSelection('Consolidado'); }} 
+                                className={`px-6 py-2 rounded-xl font-bold transition-all text-sm ${viewMode === 'voter' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                            >
+                                Votante
+                            </button>
+                            <button 
+                                onClick={() => { setViewMode('personality'); setSelection('Leo'); }} 
+                                className={`px-6 py-2 rounded-xl font-bold transition-all text-sm ${viewMode === 'personality' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                            >
+                                Personalidade
+                            </button>
+                        </div>
+
+                        <div className="flex flex-col items-center gap-2">
+                            <select 
+                                className="block w-72 mx-auto bg-slate-800 border-2 border-slate-700 text-white py-3 px-4 rounded-2xl shadow-xl font-bold" 
+                                value={selection} 
+                                onChange={(e) => setSelection(e.target.value)}
+                            >
+                                {viewMode === 'voter' && <option value="Consolidado">🔥 Consenso do Grupo</option>}
+                                {(viewMode === 'voter' ? Object.keys(votesData) : allPeople).sort().map(item => <option key={item} value={item}>{item}</option>)}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="relative w-full max-w-4xl aspect-square bg-slate-900 rounded-[2.5rem] p-4 sm:p-10 shadow-[0_0_60px_-15px_rgba(0,0,0,1)] border-8 border-slate-900 overflow-hidden">
+                        <div className="relative w-full h-full border-4 border-slate-700 bg-slate-800 rounded-2xl overflow-hidden">
+                            
+                            {/* Alinhamentos de Fundo */}
+                            {alignments.map((align, idx) => (
+                                <div key={idx} className="absolute w-[33.33%] h-[33.33%] flex items-center justify-center -translate-x-1/2 -translate-y-1/2 select-none pointer-events-none" style={{ left: getPosition(align.x), top: getPosition(align.y) }}>
+                                    <span className="text-slate-700/20 font-black text-2xl sm:text-4xl uppercase text-center leading-tight tracking-tighter w-2/3">{align.label}</span>
+                                </div>
+                            ))}
+
+                            {/* Camada de Heatmap / Blocos */}
+                            <div className="absolute inset-0 pointer-events-none">
+                                {viewMode === 'personality' ? (
+                                    <div className="grid grid-cols-6 grid-rows-6 h-full w-full">
+                                        {densityMap.map.map((row, y) => row.map((val, x) => (
+                                            <div 
+                                                key={`${x}-${y}`} 
+                                                className="relative border border-black/10 flex items-center justify-center transition-colors duration-500"
+                                                style={{ backgroundColor: getViridisColor(val, densityMap.max) }} 
+                                            >
+                                                <span className={`text-[11px] font-black ${val > (densityMap.max / 2) ? 'text-black/50' : 'text-white/40'}`}>{val}</span>
+                                            </div>
+                                        )))}
+                                    </div>
+                                ) : (
+                                    currentPoints.map((p, idx) => (
+                                        <div 
+                                            key={idx} 
+                                            className="absolute bg-orange-600/15 border border-orange-400/5 mix-blend-screen" 
+                                            style={{ left: getPosition(p.x - 1), top: getPosition(p.y - 1), width: '33.33%', height: '33.33%' }} 
+                                        />
+                                    ))
+                                )}
+                            </div>
+
+                            {/* Divisórias */}
+                            <div className="absolute top-0 bottom-0 left-[33.33%] w-1 bg-slate-900/40 pointer-events-none" />
+                            <div className="absolute top-0 bottom-0 left-[66.66%] w-1 bg-slate-900/40 pointer-events-none" />
+                            <div className="absolute left-0 right-0 top-[33.33%] h-1 bg-slate-900/40 pointer-events-none" />
+                            <div className="absolute left-0 right-0 top-[66.66%] h-1 bg-slate-900/40 pointer-events-none" />
+
+                            {/* Pontos de Dados com Rótulos */}
+                            {Object.entries(groupedPoints).map(([coord, items], idx) => {
+                                const [x, y] = coord.split('-');
+                                const isPers = viewMode === 'personality';
+                                return (
+                                    <div key={idx} className="absolute z-20" style={{ left: getPosition(Number(x)), top: getPosition(Number(y)) }}>
+                                        <div className={`absolute w-3 h-3 -ml-1.5 -mt-1.5 rounded-full border border-white shadow-md ${isPers ? 'bg-indigo-500' : 'bg-orange-500'}`} />
+                                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-slate-950/90 backdrop-blur-md border border-slate-700 text-white text-[9px] px-2 py-1 rounded shadow-lg whitespace-nowrap flex flex-col items-center gap-0.5 z-40 max-h-48 overflow-y-auto no-scrollbar shadow-2xl">
+                                            {items.map((item, i) => (
+                                                <div key={i} className={`font-bold flex items-center gap-1 ${isPers ? 'text-indigo-200' : 'text-orange-200'}`}>
+                                                    {item.name} {item.count > 1 ? `(${item.count}x)` : ''}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
