@@ -17,7 +17,6 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Transição suave para os labels */
         .label-transition {
             transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
         }
@@ -53,11 +52,13 @@
                 { name: 'Helice', x: 1, y: 5 }, { name: 'Jow', x: 5, y: 5 }
             ],
             Oscar: [
-                { name: 'Liminha', x: 2, y: 1 }, { name: 'Helice', x: 2, y: 1 }, { name: 'Phineas', x: 1, y: 2 },
-                { name: 'Shaq', x: 2, y: 2 }, { name: 'Oscar', x: 4, y: 1 }, { name: 'Leo', x: 5, y: 1 },
-                { name: 'Selico', x: 5, y: 2 }, { name: 'Hec', x: 3, y: 3 }, { name: 'Radinho', x: 2, y: 3 },
-                { name: 'Bixobre', x: 5, y: 4 }, { name: 'Tigrão', x: 1, y: 4 }, { name: 'Jow', x: 3, y: 4 },
-                { name: 'Herbs', x: 2, y: 5 }, { name: 'RG', x: 4, y: 5 }
+                { name: 'Shaq', x: 1, y: 1 },    { name: 'Phineas', x: 1, y: 1 }, 
+                { name: 'Liminha', x: 3, y: 1 }, { name: 'Helice', x: 3, y: 1 },
+                { name: 'Oscar', x: 4, y: 1 },   { name: 'Selico', x: 5, y: 1 }, // Oscar na fronteira X
+                { name: 'Leo', x: 5, y: 2 },     { name: 'Radinho', x: 1, y: 3 }, // Leo na fronteira Y
+                { name: 'Hec', x: 3, y: 3 },     { name: 'Bixobre', x: 5, y: 3 },
+                { name: 'Tigrão', x: 1, y: 5 },  { name: 'Jow', x: 3, y: 5 },
+                { name: 'Herbs', x: 3, y: 5 },   { name: 'RG', x: 5, y: 5 }
             ],
             Phineas: [...votoDuplo],
             Radinho: [...votoDuplo],
@@ -215,7 +216,7 @@
                     <div className="relative w-full max-w-4xl aspect-square bg-slate-900 rounded-[1.5rem] sm:rounded-[2.5rem] p-2 sm:p-10 shadow-[0_0_60px_-15px_rgba(0,0,0,1)] border-4 sm:border-8 border-slate-900 overflow-hidden">
                         <div className="relative w-full h-full border-2 sm:border-4 border-slate-700 bg-slate-800 rounded-lg sm:rounded-2xl overflow-hidden">
                             
-                            {/* Camada de Heatmap / Blocos (Agora abaixo das categorias) */}
+                            {/* Heatmap Layer */}
                             <div className="absolute inset-0 pointer-events-none">
                                 {viewMode === 'personality' ? (
                                     <div className="grid grid-cols-6 grid-rows-6 h-full w-full">
@@ -255,7 +256,7 @@
                             <div className="absolute left-0 right-0 top-[33.33%] h-1 bg-slate-900/40 pointer-events-none z-10" />
                             <div className="absolute left-0 right-0 top-[66.66%] h-1 bg-slate-900/40 pointer-events-none z-10" />
 
-                            {/* Pontos de Dados com Rótulos */}
+                            {/* Pontos de Dados */}
                             {Object.entries(groupedPoints).map(([coord, items], idx) => {
                                 const [x, y] = coord.split('-');
                                 const isPers = viewMode === 'personality';
@@ -270,7 +271,6 @@
                                     >
                                         <div className={`absolute w-4 h-4 sm:w-3 sm:h-3 -ml-2 -mt-2 sm:-ml-1.5 sm:-mt-1.5 rounded-full border border-white shadow-md transition-transform group-hover:scale-125 ${isPers ? 'bg-indigo-500' : 'bg-orange-500'}`} />
                                         
-                                        {/* Rótulo condicional */}
                                         <div className={`label-transition absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-950/95 backdrop-blur-md border border-slate-700 text-white text-[9px] px-2 py-1 rounded shadow-2xl whitespace-nowrap flex flex-col items-center gap-0.5 z-40 max-h-48 overflow-y-auto no-scrollbar pointer-events-none ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
                                             {items.map((item, i) => (
                                                 <div key={i} className={`font-bold flex items-center gap-1 ${isPers ? 'text-indigo-200' : 'text-orange-200'}`}>
