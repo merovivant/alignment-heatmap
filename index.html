@@ -20,6 +20,11 @@
         .label-transition {
             transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
         }
+
+        .voting-dot:hover {
+            transform: scale(1.5);
+            background-color: #ef4444;
+        }
     </style>
 </head>
 <body class="bg-slate-950">
@@ -28,16 +33,9 @@
     <script type="text/babel">
         const { useState, useMemo } = React;
 
-        // Voto partilhado por Phineas e Radinho
-        const votoDuplo = [
-            { name: 'Shaq', x: 2, y: 1 }, { name: 'Phineas', x: 3, y: 1 }, { name: 'Selico', x: 5, y: 1 },  
-            { name: 'Liminha', x: 1, y: 2 }, { name: 'Helice', x: 3, y: 2 }, { name: 'Oscar', x: 4, y: 2 },   
-            { name: 'Radinho', x: 5, y: 2 }, { name: 'Hec', x: 1, y: 4 }, { name: 'Tigrão', x: 2, y: 4 },  
-            { name: 'Leo', x: 5, y: 3 }, { name: 'Bixobre', x: 5, y: 4 }, { name: 'Jow', x: 2, y: 5 },     
-            { name: 'Herbs', x: 3, y: 5 }, { name: 'RG', x: 4, y: 4 }       
-        ];
+        const allPeople = ["Bixobre", "Hec", "Helice", "Herbs", "Jow", "Leo", "Liminha", "Oscar", "Phineas", "Radinho", "RG", "Selico", "Shaq", "Tigrão"];
 
-        const votesData = {
+        const initialVotesData = {
             Jow: [
                 { name: 'Shaq', x: 3, y: 1 }, { name: 'Oscar', x: 4, y: 1 }, { name: 'Leo', x: 5, y: 1 },
                 { name: 'Helice', x: 1, y: 1 }, { name: 'Liminha', x: 3, y: 1 }, { name: 'Tigrão', x: 1, y: 3 },
@@ -61,8 +59,20 @@
                 { name: 'Tigrão', x: 1, y: 5 },  { name: 'Jow', x: 3, y: 5 },
                 { name: 'Herbs', x: 3, y: 5 },   { name: 'RG', x: 5, y: 5 }
             ],
-            Phineas: [...votoDuplo],
-            Radinho: [...votoDuplo],
+            Phineas: [
+                { name: 'Shaq', x: 2, y: 1 }, { name: 'Phineas', x: 3, y: 1 }, { name: 'Selico', x: 5, y: 1 },  
+                { name: 'Liminha', x: 1, y: 2 }, { name: 'Helice', x: 3, y: 2 }, { name: 'Oscar', x: 4, y: 2 },   
+                { name: 'Radinho', x: 5, y: 2 }, { name: 'Hec', x: 1, y: 4 }, { name: 'Tigrão', x: 2, y: 4 },  
+                { name: 'Leo', x: 5, y: 3 }, { name: 'Bixobre', x: 5, y: 4 }, { name: 'Jow', x: 2, y: 5 },     
+                { name: 'Herbs', x: 3, y: 5 }, { name: 'RG', x: 4, y: 4 }
+            ],
+            Radinho: [
+                { name: 'Shaq', x: 2, y: 1 }, { name: 'Phineas', x: 3, y: 1 }, { name: 'Selico', x: 5, y: 1 },  
+                { name: 'Liminha', x: 1, y: 2 }, { name: 'Helice', x: 3, y: 2 }, { name: 'Oscar', x: 4, y: 2 },   
+                { name: 'Radinho', x: 5, y: 2 }, { name: 'Hec', x: 1, y: 4 }, { name: 'Tigrão', x: 2, y: 4 },  
+                { name: 'Leo', x: 5, y: 3 }, { name: 'Bixobre', x: 5, y: 4 }, { name: 'Jow', x: 2, y: 5 },     
+                { name: 'Herbs', x: 3, y: 5 }, { name: 'RG', x: 4, y: 4 }
+            ],
             Tigrão: [
                 { name: 'Shaq', x: 1, y: 1 }, { name: 'Helice', x: 1, y: 1 }, { name: 'Selico', x: 5, y: 1 },
                 { name: 'Radinho', x: 4, y: 1 }, { name: 'Jow', x: 1, y: 2 }, { name: 'Phineas', x: 3, y: 2 },
@@ -93,16 +103,18 @@
             ]
         };
 
-        const allPeople = ["Bixobre", "Hec", "Helice", "Herbs", "Jow", "Leo", "Liminha", "Oscar", "Phineas", "Radinho", "RG", "Selico", "Shaq", "Tigrão"];
-
         function App() {
             const [viewMode, setViewMode] = useState('voter');
             const [selection, setSelection] = useState('Consolidado');
             const [showAllNames, setShowAllNames] = useState(false);
             const [activeCoord, setActiveCoord] = useState(null);
 
+            const [voterName, setVoterName] = useState('');
+            const [currentVoteIndex, setCurrentVoteIndex] = useState(0);
+            const [userVotes, setUserVotes] = useState({});
+
             const currentPoints = useMemo(() => {
-                const allVotes = Object.entries(votesData).flatMap(([voter, votes]) => votes.map(v => ({ ...v, voter })));
+                const allVotes = Object.entries(initialVotesData).flatMap(([voter, votes]) => votes.map(v => ({ ...v, voter })));
                 
                 if (viewMode === 'voter') {
                     if (selection === 'Consolidado') {
@@ -125,7 +137,7 @@
                         });
                         return consensusPoints;
                     }
-                    return votesData[selection] || [];
+                    return initialVotesData[selection] || [];
                 }
                 return allVotes.filter(v => v.name === selection);
             }, [viewMode, selection]);
@@ -173,14 +185,44 @@
                 setActiveCoord(prev => prev === coord ? null : coord);
             };
 
+            const handleVote = (x, y) => {
+                const person = allPeople[currentVoteIndex];
+                setUserVotes(prev => ({ ...prev, [person]: { x, y } }));
+                if (currentVoteIndex < allPeople.length - 1) {
+                    setCurrentVoteIndex(prev => prev + 1);
+                }
+            };
+
+            const registerAndSend = () => {
+                if (!voterName) {
+                    alert("Por favor, introduz o teu nome.");
+                    return;
+                }
+                const formattedVotes = allPeople.map(p => ({
+                    name: p,
+                    x: userVotes[p]?.x || 3,
+                    y: userVotes[p]?.y || 3
+                }));
+
+                const payload = {
+                    voter: voterName,
+                    votes: formattedVotes
+                };
+
+                const message = encodeURIComponent(`Olá! Aqui estão os meus votos para o Alignment Heatmap:\n\n` + JSON.stringify(payload, null, 2));
+                window.open(`https://wa.me/5511963592769?text=${message}`, '_blank');
+            };
+
+            const isVotingComplete = Object.keys(userVotes).length === allPeople.length;
+
             return (
                 <div className="min-h-screen text-slate-200 flex flex-col items-center p-4 sm:p-8">
                     <div className="max-w-3xl w-full text-center mb-6">
-                        <h1 className="text-3xl sm:text-4xl font-black mb-4 text-white tracking-tighter uppercase italic drop-shadow-lg">
+                        <h1 className="text-3xl sm:text-4xl font-black mb-4 text-white tracking-tighter uppercase italic drop-shadow-lg text-center">
                             Alignment <span className="text-red-500 underline decoration-wavy">Heatmap</span>
                         </h1>
                         
-                        <div className="flex bg-slate-900 p-1 rounded-2xl border border-slate-800 mb-6 w-fit mx-auto shadow-2xl">
+                        <div className="flex bg-slate-900 p-1 rounded-2xl border border-slate-800 mb-6 w-fit mx-auto shadow-2xl overflow-hidden">
                             <button 
                                 onClick={() => { setViewMode('voter'); setSelection('Consolidado'); setActiveCoord(null); }} 
                                 className={`px-4 sm:px-6 py-2 rounded-xl font-bold transition-all text-xs sm:text-sm ${viewMode === 'voter' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
@@ -193,98 +235,199 @@
                             >
                                 Personalidade
                             </button>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                            <select 
-                                className="block w-64 bg-slate-800 border-2 border-slate-700 text-white py-2 px-4 rounded-xl shadow-xl font-bold text-sm outline-none focus:border-red-500 transition-colors" 
-                                value={selection} 
-                                onChange={(e) => { setSelection(e.target.value); setActiveCoord(null); }}
-                            >
-                                {viewMode === 'voter' && <option value="Consolidado">🔥 Consenso do Grupo</option>}
-                                {(viewMode === 'voter' ? Object.keys(votesData) : allPeople).sort().map(item => <option key={item} value={item}>{item}</option>)}
-                            </select>
-                            
                             <button 
-                                onClick={() => setShowAllNames(!showAllNames)}
-                                className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest border-2 transition-all ${showAllNames ? 'bg-red-500 border-red-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}`}
+                                onClick={() => { setViewMode('vote'); }} 
+                                className={`px-4 sm:px-6 py-2 rounded-xl font-bold transition-all text-xs sm:text-sm ${viewMode === 'vote' ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500 hover:text-red-400'}`}
                             >
-                                {showAllNames ? 'Hide Names' : 'Show Names'}
+                                VOTAR!
                             </button>
                         </div>
+
+                        {viewMode !== 'vote' && (
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                                <select 
+                                    className="block w-64 bg-slate-800 border-2 border-slate-700 text-white py-2 px-4 rounded-xl shadow-xl font-bold text-sm outline-none focus:border-red-500 transition-colors" 
+                                    value={selection} 
+                                    onChange={(e) => { setSelection(e.target.value); setActiveCoord(null); }}
+                                >
+                                    {viewMode === 'voter' && <option value="Consolidado">🔥 Consenso do Grupo</option>}
+                                    {(viewMode === 'voter' ? Object.keys(initialVotesData) : allPeople).sort().map(item => <option key={item} value={item}>{item}</option>)}
+                                </select>
+                                
+                                <button 
+                                    onClick={() => setShowAllNames(!showAllNames)}
+                                    className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest border-2 transition-all ${showAllNames ? 'bg-red-500 border-red-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}`}
+                                >
+                                    {showAllNames ? 'Hide Names' : 'Show Names'}
+                                </button>
+                            </div>
+                        )}
                     </div>
 
-                    <div className="relative w-full max-w-4xl aspect-square bg-slate-900 rounded-[1.5rem] sm:rounded-[2.5rem] p-2 sm:p-10 shadow-[0_0_60px_-15px_rgba(0,0,0,1)] border-4 sm:border-8 border-slate-900 overflow-hidden">
-                        <div className="relative w-full h-full border-2 sm:border-4 border-slate-700 bg-slate-800 rounded-lg sm:rounded-2xl overflow-hidden">
+                    {viewMode === 'vote' ? (
+                        <div className="w-full max-w-2xl bg-slate-900 rounded-3xl p-6 border-4 border-red-900 shadow-2xl">
+                            <h2 className="text-xl font-black text-center mb-6 uppercase tracking-widest text-red-500 italic">Registra o teu Voto</h2>
                             
-                            {/* Camada de Heatmap / Blocos */}
-                            <div className="absolute inset-0 pointer-events-none">
-                                {viewMode === 'personality' ? (
-                                    <div className="grid grid-cols-6 grid-rows-6 h-full w-full">
-                                        {densityMap.map.map((row, y) => row.map((val, x) => (
-                                            <div 
-                                                key={`${x}-${y}`} 
-                                                className="relative border border-black/10 flex items-center justify-center transition-colors duration-500"
-                                                style={{ backgroundColor: getViridisColor(val, densityMap.max) }} 
-                                            >
-                                                <span className={`text-[10px] sm:text-[11px] font-black ${val > (densityMap.max / 2) ? 'text-black/50' : 'text-white/40'}`}>{val}</span>
-                                            </div>
-                                        )))}
-                                    </div>
-                                ) : (
-                                    currentPoints.map((p, idx) => (
-                                        <div 
-                                            key={idx} 
-                                            className="absolute bg-orange-600/15 border border-orange-400/5 mix-blend-screen" 
-                                            style={{ left: getPosition(p.x - 1), top: getPosition(p.y - 1), width: '33.33%', height: '33.33%' }} 
-                                        />
-                                    ))
-                                )}
+                            <div className="mb-6">
+                                <label className="block text-[10px] uppercase font-black text-slate-500 mb-2">O Teu Nome:</label>
+                                <input 
+                                    type="text" 
+                                    className="w-full bg-slate-800 border-2 border-slate-700 rounded-xl px-4 py-2 text-white font-bold outline-none focus:border-red-500"
+                                    placeholder="Ex: Teu Apelido"
+                                    value={voterName}
+                                    onChange={(e) => setVoterName(e.target.value)}
+                                />
                             </div>
 
-                            {/* Alinhamentos de Categoria (Sobrepondo o Heatmap) */}
-                            {alignments.map((align, idx) => (
-                                <div key={idx} className="absolute w-[33.33%] h-[33.33%] flex items-center justify-center -translate-x-1/2 -translate-y-1/2 select-none pointer-events-none z-10" style={{ left: getPosition(align.x), top: getPosition(align.y) }}>
-                                    <span className="text-white/40 font-black text-xl sm:text-4xl uppercase text-center leading-tight tracking-tighter w-2/3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-                                        {align.label}
-                                    </span>
+                            <div className="bg-slate-950 rounded-2xl p-4 sm:p-6 border-2 border-slate-800 relative">
+                                <div className="flex justify-between items-center mb-4">
+                                    <button 
+                                        onClick={() => setCurrentVoteIndex(i => Math.max(0, i-1))}
+                                        className="p-2 text-slate-500 hover:text-white font-bold"
+                                    >◀</button>
+                                    <div className="text-center">
+                                        <span className="text-[10px] uppercase font-black text-slate-500">A votar em:</span>
+                                        <div className="text-2xl font-black text-white">{allPeople[currentVoteIndex]}</div>
+                                        <div className="text-[10px] text-slate-600 mt-1 uppercase font-bold tracking-widest">{currentVoteIndex + 1} de {allPeople.length}</div>
+                                    </div>
+                                    <button 
+                                        onClick={() => setCurrentVoteIndex(i => Math.min(allPeople.length-1, i+1))}
+                                        className="p-2 text-slate-500 hover:text-white font-bold"
+                                    >▶</button>
                                 </div>
-                            ))}
 
-                            {/* Divisórias */}
-                            <div className="absolute top-0 bottom-0 left-[33.33%] w-1 bg-slate-900/40 pointer-events-none z-10" />
-                            <div className="absolute top-0 bottom-0 left-[66.66%] w-1 bg-slate-900/40 pointer-events-none z-10" />
-                            <div className="absolute left-0 right-0 top-[33.33%] h-1 bg-slate-900/40 pointer-events-none z-10" />
-                            <div className="absolute left-0 right-0 top-[66.66%] h-1 bg-slate-900/40 pointer-events-none z-10" />
+                                {/* Mini Grid de Votação (5x5 pontos) ajustada */}
+                                <div className="aspect-square w-full max-w-[320px] mx-auto relative border-2 border-slate-700 bg-slate-800 rounded-xl overflow-hidden shadow-inner">
+                                    
+                                    {/* Labels de fundo na grelha de voto (posições: 15%, 50%, 85%) */}
+                                    {alignments.map((align, idx) => (
+                                        <div key={idx} className="absolute w-[30%] h-[30%] flex items-center justify-center -translate-x-1/2 -translate-y-1/2 select-none pointer-events-none z-0" 
+                                            style={{ 
+                                                left: align.x === 1 ? '15%' : align.x === 3 ? '50%' : '85%',
+                                                top: align.y === 1 ? '15%' : align.y === 3 ? '50%' : '85%'
+                                            }}>
+                                            <span className="text-white/10 font-black text-[9px] sm:text-[10px] uppercase text-center leading-tight tracking-tighter w-full">
+                                                {align.label}
+                                            </span>
+                                        </div>
+                                    ))}
 
-                            {/* Pontos de Dados com Rótulos Interativos */}
-                            {Object.entries(groupedPoints).map(([coord, items], idx) => {
-                                const [x, y] = coord.split('-');
-                                const isPers = viewMode === 'personality';
-                                const isVisible = showAllNames || activeCoord === coord;
-                                
-                                return (
-                                    <div 
-                                        key={idx} 
-                                        className="absolute z-20 cursor-pointer group" 
-                                        style={{ left: getPosition(Number(x)), top: getPosition(Number(y)) }}
-                                        onClick={() => togglePoint(coord)}
-                                    >
-                                        <div className={`absolute w-4 h-4 sm:w-3 sm:h-3 -ml-2 -mt-2 sm:-ml-1.5 sm:-mt-1.5 rounded-full border border-white shadow-md transition-transform group-hover:scale-125 ${isPers ? 'bg-indigo-500' : 'bg-orange-500'}`} />
-                                        
-                                        {/* Rótulo condicional */}
-                                        <div className={`label-transition absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-950/95 backdrop-blur-md border border-slate-700 text-white text-[9px] px-2 py-1 rounded shadow-2xl whitespace-nowrap flex flex-col items-center gap-0.5 z-40 max-h-48 overflow-y-auto no-scrollbar pointer-events-none ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
-                                            {items.map((item, i) => (
-                                                <div key={i} className={`font-bold flex items-center gap-1 ${isPers ? 'text-indigo-200' : 'text-orange-200'}`}>
-                                                    {item.name} {item.count > 1 ? `(${item.count}x)` : ''}
-                                                </div>
-                                            ))}
+                                    {/* Linhas Divisórias que passam pelos pontos 2 e 4 (30% e 70%) */}
+                                    <div className="absolute top-0 bottom-0 left-[30%] w-[1px] bg-white/20 pointer-events-none z-10" />
+                                    <div className="absolute top-0 bottom-0 left-[70%] w-[1px] bg-white/20 pointer-events-none z-10" />
+                                    <div className="absolute left-0 right-0 top-[30%] h-[1px] bg-white/20 pointer-events-none z-10" />
+                                    <div className="absolute left-0 right-0 top-[70%] h-[1px] bg-white/20 pointer-events-none z-10" />
+
+                                    {/* Eixos Visuais na Mini Grelha */}
+                                    <div className="absolute top-1 left-1 flex flex-col gap-0.5 opacity-30">
+                                        <div className="text-[7px] font-bold text-white uppercase tracking-tighter flex items-center gap-1">
+                                            <span>◀ Legal</span>
+                                            <span className="text-[10px]">⚖️</span>
+                                        </div>
+                                        <div className="text-[7px] font-bold text-white uppercase tracking-tighter flex items-center gap-1">
+                                            <span>▲ Bom</span>
+                                            <span className="text-[10px]">✨</span>
                                         </div>
                                     </div>
-                                );
-                            })}
+                                    <div className="absolute bottom-1 right-1 flex flex-col items-end gap-0.5 opacity-30 text-right">
+                                        <div className="text-[7px] font-bold text-white uppercase tracking-tighter">Caótico ▶</div>
+                                        <div className="text-[7px] font-bold text-white uppercase tracking-tighter">Mau ▼</div>
+                                    </div>
+
+                                    {/* Botões de Voto 5x5 (Pontos centrados em 10%, 30%, 50%, 70%, 90%) */}
+                                    <div className="absolute inset-0 grid grid-cols-5 grid-rows-5 z-20">
+                                        {[1,2,3,4,5].map(y => [1,2,3,4,5].map(x => (
+                                            <button 
+                                                key={`${x}-${y}`}
+                                                onClick={() => handleVote(x, y)}
+                                                className={`relative flex items-center justify-center transition-all ${userVotes[allPeople[currentVoteIndex]]?.x === x && userVotes[allPeople[currentVoteIndex]]?.y === y ? 'bg-red-500/15' : 'hover:bg-white/5'}`}
+                                            >
+                                                <div className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 transition-all shadow-md ${userVotes[allPeople[currentVoteIndex]]?.x === x && userVotes[allPeople[currentVoteIndex]]?.y === y ? 'bg-red-500 border-white scale-125' : 'bg-slate-700 border-slate-600'}`} />
+                                            </button>
+                                        )))}
+                                    </div>
+                                </div>
+
+                                <p className="text-[10px] text-center text-slate-500 mt-4 uppercase tracking-widest font-bold italic">
+                                    Clica numa bolinha acima para votar
+                                </p>
+                            </div>
+
+                            <button 
+                                onClick={registerAndSend}
+                                className={`w-full mt-6 py-4 rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl ${isVotingComplete ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}
+                            >
+                                {isVotingComplete ? '🚀 Enviar via WhatsApp' : `Faltam ${allPeople.length - Object.keys(userVotes).length} pessoas`}
+                            </button>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="relative w-full max-w-4xl aspect-square bg-slate-900 rounded-[1.5rem] sm:rounded-[2.5rem] p-2 sm:p-10 shadow-[0_0_60px_-15px_rgba(0,0,0,1)] border-4 sm:border-8 border-slate-900 overflow-hidden">
+                            <div className="relative w-full h-full border-2 sm:border-4 border-slate-700 bg-slate-800 rounded-lg sm:rounded-2xl overflow-hidden">
+                                
+                                <div className="absolute inset-0 pointer-events-none">
+                                    {viewMode === 'personality' ? (
+                                        <div className="grid grid-cols-6 grid-rows-6 h-full w-full">
+                                            {densityMap.map.map((row, y) => row.map((val, x) => (
+                                                <div 
+                                                    key={`${x}-${y}`} 
+                                                    className="relative border border-black/10 flex items-center justify-center transition-colors duration-500"
+                                                    style={{ backgroundColor: getViridisColor(val, densityMap.max) }} 
+                                                >
+                                                    <span className={`text-[10px] sm:text-[11px] font-black ${val > (densityMap.max / 2) ? 'text-black/50' : 'text-white/40'}`}>{val}</span>
+                                                </div>
+                                            )))}
+                                        </div>
+                                    ) : (
+                                        currentPoints.map((p, idx) => (
+                                            <div 
+                                                key={idx} 
+                                                className="absolute bg-orange-600/15 border border-orange-400/5 mix-blend-screen" 
+                                                style={{ left: getPosition(p.x - 1), top: getPosition(p.y - 1), width: '33.33%', height: '33.33%' }} 
+                                            />
+                                        ))
+                                    )}
+                                </div>
+
+                                {alignments.map((align, idx) => (
+                                    <div key={idx} className="absolute w-[33.33%] h-[33.33%] flex items-center justify-center -translate-x-1/2 -translate-y-1/2 select-none pointer-events-none z-10" style={{ left: getPosition(align.x), top: getPosition(align.y) }}>
+                                        <span className="text-white/40 font-black text-xl sm:text-4xl uppercase text-center leading-tight tracking-tighter w-2/3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] text-center">
+                                            {align.label}
+                                        </span>
+                                    </div>
+                                ))}
+
+                                <div className="absolute top-0 bottom-0 left-[33.33%] w-1 bg-slate-900/40 pointer-events-none z-10" />
+                                <div className="absolute top-0 bottom-0 left-[66.66%] w-1 bg-slate-900/40 pointer-events-none z-10" />
+                                <div className="absolute left-0 right-0 top-[33.33%] h-1 bg-slate-900/40 pointer-events-none z-10" />
+                                <div className="absolute left-0 right-0 top-[66.66%] h-1 bg-slate-900/40 pointer-events-none z-10" />
+
+                                {Object.entries(groupedPoints).map(([coord, items], idx) => {
+                                    const [x, y] = coord.split('-');
+                                    const isPers = viewMode === 'personality';
+                                    const isVisible = showAllNames || activeCoord === coord;
+                                    
+                                    return (
+                                        <div 
+                                            key={idx} 
+                                            className="absolute z-20 cursor-pointer group" 
+                                            style={{ left: getPosition(Number(x)), top: getPosition(Number(y)) }}
+                                            onClick={() => togglePoint(coord)}
+                                        >
+                                            <div className={`absolute w-4 h-4 sm:w-3 sm:h-3 -ml-2 -mt-2 sm:-ml-1.5 sm:-mt-1.5 rounded-full border border-white shadow-md transition-transform group-hover:scale-125 ${isPers ? 'bg-indigo-500' : 'bg-orange-500'}`} />
+                                            
+                                            <div className={`label-transition absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-950/95 backdrop-blur-md border border-slate-700 text-white text-[9px] px-2 py-1 rounded shadow-2xl whitespace-nowrap flex flex-col items-center gap-0.5 z-40 max-h-48 overflow-y-auto no-scrollbar pointer-events-none ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
+                                                {items.map((item, i) => (
+                                                    <div key={i} className={`font-bold flex items-center gap-1 ${isPers ? 'text-indigo-200' : 'text-orange-200'}`}>
+                                                        {item.name} {item.count > 1 ? `(${item.count}x)` : ''}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         }
