@@ -215,14 +215,7 @@
                     <div className="relative w-full max-w-4xl aspect-square bg-slate-900 rounded-[1.5rem] sm:rounded-[2.5rem] p-2 sm:p-10 shadow-[0_0_60px_-15px_rgba(0,0,0,1)] border-4 sm:border-8 border-slate-900 overflow-hidden">
                         <div className="relative w-full h-full border-2 sm:border-4 border-slate-700 bg-slate-800 rounded-lg sm:rounded-2xl overflow-hidden">
                             
-                            {/* Alinhamentos de Fundo */}
-                            {alignments.map((align, idx) => (
-                                <div key={idx} className="absolute w-[33.33%] h-[33.33%] flex items-center justify-center -translate-x-1/2 -translate-y-1/2 select-none pointer-events-none" style={{ left: getPosition(align.x), top: getPosition(align.y) }}>
-                                    <span className="text-slate-700/20 font-black text-xl sm:text-4xl uppercase text-center leading-tight tracking-tighter w-2/3">{align.label}</span>
-                                </div>
-                            ))}
-
-                            {/* Camada de Heatmap / Blocos */}
+                            {/* Camada de Heatmap / Blocos (Agora abaixo das categorias) */}
                             <div className="absolute inset-0 pointer-events-none">
                                 {viewMode === 'personality' ? (
                                     <div className="grid grid-cols-6 grid-rows-6 h-full w-full">
@@ -247,11 +240,20 @@
                                 )}
                             </div>
 
+                            {/* Alinhamentos de Categoria (Sobrepondo o Heatmap) */}
+                            {alignments.map((align, idx) => (
+                                <div key={idx} className="absolute w-[33.33%] h-[33.33%] flex items-center justify-center -translate-x-1/2 -translate-y-1/2 select-none pointer-events-none z-10" style={{ left: getPosition(align.x), top: getPosition(align.y) }}>
+                                    <span className="text-white/40 font-black text-xl sm:text-4xl uppercase text-center leading-tight tracking-tighter w-2/3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                                        {align.label}
+                                    </span>
+                                </div>
+                            ))}
+
                             {/* Divisórias */}
-                            <div className="absolute top-0 bottom-0 left-[33.33%] w-1 bg-slate-900/40 pointer-events-none" />
-                            <div className="absolute top-0 bottom-0 left-[66.66%] w-1 bg-slate-900/40 pointer-events-none" />
-                            <div className="absolute left-0 right-0 top-[33.33%] h-1 bg-slate-900/40 pointer-events-none" />
-                            <div className="absolute left-0 right-0 top-[66.66%] h-1 bg-slate-900/40 pointer-events-none" />
+                            <div className="absolute top-0 bottom-0 left-[33.33%] w-1 bg-slate-900/40 pointer-events-none z-10" />
+                            <div className="absolute top-0 bottom-0 left-[66.66%] w-1 bg-slate-900/40 pointer-events-none z-10" />
+                            <div className="absolute left-0 right-0 top-[33.33%] h-1 bg-slate-900/40 pointer-events-none z-10" />
+                            <div className="absolute left-0 right-0 top-[66.66%] h-1 bg-slate-900/40 pointer-events-none z-10" />
 
                             {/* Pontos de Dados com Rótulos */}
                             {Object.entries(groupedPoints).map(([coord, items], idx) => {
